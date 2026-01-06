@@ -1,0 +1,956 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Is ve Enerji Teoremi - Fizik 11</title>
+  <style>
+    :root {
+      --navy: #2c3e50;
+      --blue: #3498db;
+      --white: #ffffff;
+      --muted: #e9f2fa;
+      --accent: #f1c40f;
+      --text: #1d2b36;
+      --shadow: 0 10px 30px rgba(44, 62, 80, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--white);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--white);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--navy);
+      letter-spacing: 0.5px;
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 18px;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: var(--navy);
+      font-weight: 600;
+      padding: 8px 12px;
+      border-radius: 8px;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    nav a:hover {
+      background: var(--muted);
+      color: var(--blue);
+    }
+
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+    }
+
+    .hamburger span {
+      width: 28px;
+      height: 3px;
+      background: var(--navy);
+      border-radius: 3px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(52, 152, 219, 0.12), rgba(44, 62, 80, 0.08));
+      padding: 80px 20px 70px;
+    }
+
+    .hero-content {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 30px;
+      align-items: center;
+    }
+
+    .hero-text h1 {
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      color: var(--navy);
+      margin-bottom: 12px;
+    }
+
+    .hero-text p {
+      font-size: 1.05rem;
+      margin-bottom: 16px;
+    }
+
+    .hero-text .credit {
+      font-weight: 700;
+      color: var(--blue);
+      margin-bottom: 12px;
+    }
+
+    .cta {
+      display: inline-block;
+      padding: 12px 28px;
+      background: var(--blue);
+      color: var(--white);
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 700;
+      box-shadow: var(--shadow);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 30px rgba(52, 152, 219, 0.3);
+    }
+
+    section {
+      padding: 60px 20px;
+    }
+
+    .section-title {
+      text-align: center;
+      margin-bottom: 36px;
+      color: var(--navy);
+      font-size: 2rem;
+    }
+
+    .cards {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+      border-top: 4px solid var(--blue);
+    }
+
+    .card h3 {
+      margin-bottom: 10px;
+      color: var(--navy);
+    }
+
+    .formula-grid {
+      max-width: 900px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .formula {
+      background: var(--navy);
+      color: var(--white);
+      padding: 24px;
+      border-radius: 14px;
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .simulation {
+      background: var(--muted);
+    }
+
+    .mode-controls {
+      max-width: 1100px;
+      margin: 0 auto 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .mode-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .mode-buttons button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      background: var(--white);
+      color: var(--navy);
+      font-weight: 700;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .mode-buttons button.active {
+      background: var(--navy);
+      color: var(--white);
+    }
+
+    .sim-layout {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+    }
+
+    .panel {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel h3 {
+      color: var(--navy);
+      margin-bottom: 12px;
+    }
+
+    canvas {
+      width: 100%;
+      border-radius: 12px;
+      background: #fefefe;
+      border: 1px solid rgba(44, 62, 80, 0.15);
+    }
+
+    .control-group {
+      margin-bottom: 16px;
+    }
+
+    .control-group label {
+      font-weight: 600;
+      color: var(--navy);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .control-group input,
+    .control-group select {
+      width: 100%;
+    }
+
+    .info-tip {
+      margin-top: 6px;
+      background: #ffeaa7;
+      color: #5c4400;
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      box-shadow: inset 0 0 0 1px rgba(92, 68, 0, 0.15);
+    }
+
+    .tips-hidden .info-tip {
+      display: none;
+    }
+
+    .metrics {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      background: var(--muted);
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-weight: 600;
+      color: var(--navy);
+    }
+
+    .graphs {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .energy-bars {
+      margin-top: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .bar {
+      background: #e0e6ef;
+      border-radius: 999px;
+      overflow: hidden;
+      height: 14px;
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      width: 50%;
+    }
+
+    .bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--navy);
+    }
+
+    .about {
+      max-width: 900px;
+      margin: 0 auto;
+      text-align: center;
+      color: var(--navy);
+    }
+
+    footer {
+      background: var(--navy);
+      color: var(--white);
+      text-align: center;
+      padding: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .sim-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      nav ul {
+        display: none;
+        flex-direction: column;
+        gap: 10px;
+        background: var(--white);
+        position: absolute;
+        top: 64px;
+        right: 20px;
+        padding: 16px;
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+      }
+
+      nav ul.open {
+        display: flex;
+      }
+
+      .hamburger {
+        display: flex;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <div class="logo">Fizik 11</div>
+      <nav>
+        <div class="hamburger" id="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <ul id="navLinks">
+          <li><a href="#home">Ana Sayfa</a></li>
+          <li><a href="#topic">Konu</a></li>
+          <li><a href="#formulas">Formuller</a></li>
+          <li><a href="#example">Ornek</a></li>
+          <li><a href="#simulation">Simulasyon</a></li>
+          <li><a href="#about">Hakkinda</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero" id="home">
+    <div class="hero-content">
+      <div class="hero-text">
+        <h1>Is ve Enerji Teoremi</h1>
+        <p class="credit">Proje Tuna Aydemir tarafindan yapilmistir</p>
+        <p>Kuvvet, yol ve enerji arasindaki iliskiyi zamandan bagimsiz olarak kesfedin.</p>
+        <a class="cta" href="#topic">Konuya Basla</a>
+      </div>
+      <div class="panel">
+        <h3>Kisa Ozet</h3>
+        <p>Bir cisme etki eden net kuvvetin yaptigi is, cismin kinetik enerjisindeki degisime esittir. Bu sayede hareketin sonucu dogrudan enerjiyle baglanir.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="topic">
+    <h2 class="section-title">Konu Anlatimi</h2>
+    <div class="cards">
+      <div class="card">
+        <h3>Giris (Enerji nedir?)</h3>
+        <p>Enerji, bir sistemin is yapabilme kapasitesidir ve farkli turleri birbirine donusebilir.</p>
+      </div>
+      <div class="card">
+        <h3>Fiziksel Is</h3>
+        <p>Bir kuvvetin bir cismi hareket ettirmesi icin kuvvet ve yer degistirme ayni dogrultuda olmalidir.</p>
+      </div>
+      <div class="card">
+        <h3>Kinetik Enerji</h3>
+        <p>Hareket eden her cisim, hizina ve kutlesine bagli olarak kinetik enerji tasir.</p>
+      </div>
+      <div class="card">
+        <h3>Is-Enerji Teoremi</h3>
+        <p>Net is, cismin kinetik enerjisindeki degisime esittir. W_net = Delta_Ek.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="formulas">
+    <h2 class="section-title">Formuller</h2>
+    <div class="formula-grid">
+      <div class="formula">W = F * x * cos(theta)</div>
+      <div class="formula">Ek = 1/2 * m * v^2</div>
+      <div class="formula">W_net = Delta_Ek</div>
+    </div>
+  </section>
+
+  <section id="example">
+    <h2 class="section-title">Ornek</h2>
+    <div class="cards">
+      <div class="card">
+        <h3>Kisa Senaryo</h3>
+        <p>10 N'luk kuvvet bir cismi 3 m itiyorsa, yapilan is 30 J olur. Eger cisim 2 m/s hiz kazaniyorsa, bu degisim kinetik enerjide gorulur.</p>
+      </div>
+      <div class="card">
+        <h3>Yorum</h3>
+        <p>Isin buyuklugu, kuvvetin dogrultusu ve alinan yol ile dogrudan ilgilidir. Aci arttikca etkili is azalir.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="simulation" id="simulation">
+    <h2 class="section-title">Fizik Laboratuvari</h2>
+    <div class="mode-controls">
+      <div class="mode-buttons">
+        <button class="active" id="modeA">MOD A</button>
+        <button id="modeB">MOD B</button>
+      </div>
+      <label>
+        <input type="checkbox" id="toggleTips" checked /> Sunum Ipuclarini Goster
+      </label>
+    </div>
+
+    <div class="sim-layout" id="modA">
+      <div class="panel">
+        <h3>Mod A: Is ve Kuvvet</h3>
+        <canvas id="canvasA" width="640" height="320"></canvas>
+        <div class="metrics">
+          <div class="metric" id="speedValue">Hiz: 0.0 m/s</div>
+          <div class="metric" id="posValue">Konum: 0.0 m</div>
+          <div class="metric" id="workValue">Is: 0.0 J</div>
+        </div>
+        <div class="graphs">
+          <canvas id="graphXT" width="200" height="120"></canvas>
+          <canvas id="graphVT" width="200" height="120"></canvas>
+          <canvas id="graphWX" width="200" height="120"></canvas>
+        </div>
+      </div>
+      <div class="panel" id="controlPanelA">
+        <h3>Kontroller</h3>
+        <div class="control-group">
+          <label>Kuvvet (F) <span id="fVal">20 N</span></label>
+          <input type="range" id="force" min="0" max="50" value="20" />
+          <div class="info-tip">Kuvvet artarsa blok daha hizli ivmelenir.</div>
+        </div>
+        <div class="control-group">
+          <label>Aci (theta) <span id="thetaVal">0 deg</span></label>
+          <input type="range" id="theta" min="0" max="60" value="0" />
+          <div class="info-tip">Aci buyudukce yatay bilesen azalir, yapilan is dusulebilir.</div>
+        </div>
+        <div class="control-group">
+          <label>Kutle (m) <span id="massVal">4 kg</span></label>
+          <input type="range" id="mass" min="1" max="10" value="4" />
+          <div class="info-tip">Kutle artarsa ivme azalir, cisim daha zor hizlanir.</div>
+        </div>
+        <div class="control-group">
+          <label>Surtunme Katsayisi (mu) <span id="muVal">0.20</span></label>
+          <input type="range" id="mu" min="0" max="0.8" step="0.05" value="0.2" />
+          <div class="info-tip">Surtunme acilirsa mekanik enerji korunmaz, isiye donusur.</div>
+        </div>
+        <div class="control-group">
+          <label>Yercekimi (g) <span id="gVal">9.8</span></label>
+          <input type="range" id="gravity" min="1" max="15" step="0.1" value="9.8" />
+          <div class="info-tip">g artarsa normal kuvvet artar, surtunme daha buyuk olur.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-layout" id="modB" style="display:none;">
+      <div class="panel">
+        <h3>Mod B: Enerji Donusumu (U-Pist)</h3>
+        <canvas id="canvasB" width="640" height="320"></canvas>
+        <div class="energy-bars">
+          <div>
+            <div class="bar-label"><span>Kinetik</span><span id="ekLabel">0 J</span></div>
+            <div class="bar"><span id="ekBar" style="background:#2ecc71"></span></div>
+          </div>
+          <div>
+            <div class="bar-label"><span>Potansiyel</span><span id="epLabel">0 J</span></div>
+            <div class="bar"><span id="epBar" style="background:#3498db"></span></div>
+          </div>
+          <div>
+            <div class="bar-label"><span>Isi</span><span id="ehLabel">0 J</span></div>
+            <div class="bar"><span id="ehBar" style="background:#e74c3c"></span></div>
+          </div>
+          <div>
+            <div class="bar-label"><span>Toplam</span><span id="etLabel">0 J</span></div>
+            <div class="bar"><span id="etBar" style="background:#f1c40f"></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel" id="controlPanelB">
+        <h3>Kontroller</h3>
+        <div class="control-group">
+          <label>Baslangic Yuksekligi (h) <span id="hVal">3.0 m</span></label>
+          <input type="range" id="height" min="1" max="5" step="0.1" value="3" />
+          <div class="info-tip">Yukseklik artarsa potansiyel enerji artar, top daha hizli iner.</div>
+        </div>
+        <div class="control-group">
+          <label>Kutle (m) <span id="massBVal">2 kg</span></label>
+          <input type="range" id="massB" min="1" max="8" value="2" />
+          <div class="info-tip">Kutle artarsa enerji miktari artar, ancak hareketin sekli degismez.</div>
+        </div>
+        <div class="control-group">
+          <label>Ortam</label>
+          <select id="planet">
+            <option value="9.8">Dunya (g=9.8)</option>
+            <option value="1.6">Ay (g=1.6)</option>
+            <option value="3.7">Mars (g=3.7)</option>
+          </select>
+          <div class="info-tip">g dusukse top daha yavas hizlanir ve daha uzun surede hareket eder.</div>
+        </div>
+        <div class="control-group">
+          <label>Surtunme Kaybi <span id="lossVal">0.05</span></label>
+          <input type="range" id="loss" min="0" max="0.2" step="0.01" value="0.05" />
+          <div class="info-tip">Surtunme varsa toplam enerji azalir ve isi artar.</div>
+        </div>
+        <div class="control-group">
+          <label>Simulasyon Hizi <span id="speedVal">1.0x</span></label>
+          <input type="range" id="simSpeed" min="0.5" max="2" step="0.1" value="1" />
+          <div class="info-tip">Hizi artirmak, ayni fiziksel sureci daha kisa zamanda gosterir.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="about">
+    <h2 class="section-title">Hakkinda</h2>
+    <div class="about">
+      <p>Bu proje, 11. sinif Fizik dersi icin Is ve Enerji Teoremi konusunu modern ve interaktif bir sekilde anlatmak amaciyla hazirlandi. Simulasyonlar temel fizik prensiplerini gorsel hale getirir.</p>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2026 Fizik 11 - Tum haklari saklidir.</p>
+  </footer>
+
+  <script>
+    const navLinks = document.getElementById("navLinks");
+    const hamburger = document.getElementById("hamburger");
+
+    hamburger.addEventListener("click", () => {
+      navLinks.classList.toggle("open");
+    });
+
+    const modeAButton = document.getElementById("modeA");
+    const modeBButton = document.getElementById("modeB");
+    const modA = document.getElementById("modA");
+    const modB = document.getElementById("modB");
+
+    modeAButton.addEventListener("click", () => {
+      modeAButton.classList.add("active");
+      modeBButton.classList.remove("active");
+      modA.style.display = "grid";
+      modB.style.display = "none";
+    });
+
+    modeBButton.addEventListener("click", () => {
+      modeBButton.classList.add("active");
+      modeAButton.classList.remove("active");
+      modB.style.display = "grid";
+      modA.style.display = "none";
+    });
+
+    const toggleTips = document.getElementById("toggleTips");
+    const controlPanelA = document.getElementById("controlPanelA");
+    const controlPanelB = document.getElementById("controlPanelB");
+
+    toggleTips.addEventListener("change", () => {
+      const hide = !toggleTips.checked;
+      controlPanelA.classList.toggle("tips-hidden", hide);
+      controlPanelB.classList.toggle("tips-hidden", hide);
+    });
+
+    const force = document.getElementById("force");
+    const theta = document.getElementById("theta");
+    const mass = document.getElementById("mass");
+    const mu = document.getElementById("mu");
+    const gravity = document.getElementById("gravity");
+
+    const fVal = document.getElementById("fVal");
+    const thetaVal = document.getElementById("thetaVal");
+    const massVal = document.getElementById("massVal");
+    const muVal = document.getElementById("muVal");
+    const gVal = document.getElementById("gVal");
+
+    const speedValue = document.getElementById("speedValue");
+    const posValue = document.getElementById("posValue");
+    const workValue = document.getElementById("workValue");
+
+    const canvasA = document.getElementById("canvasA");
+    const ctxA = canvasA.getContext("2d");
+    const graphXT = document.getElementById("graphXT");
+    const graphVT = document.getElementById("graphVT");
+    const graphWX = document.getElementById("graphWX");
+    const gxt = graphXT.getContext("2d");
+    const gvt = graphVT.getContext("2d");
+    const gwx = graphWX.getContext("2d");
+
+    let position = 0;
+    let velocity = 0;
+    let work = 0;
+    let time = 0;
+    const maxDistance = 10;
+    const history = { t: [], x: [], v: [], w: [], s: [] };
+
+    function updateValues() {
+      fVal.textContent = `${force.value} N`;
+      thetaVal.textContent = `${theta.value} deg`;
+      massVal.textContent = `${mass.value} kg`;
+      muVal.textContent = parseFloat(mu.value).toFixed(2);
+      gVal.textContent = parseFloat(gravity.value).toFixed(1);
+    }
+
+    [force, theta, mass, mu, gravity].forEach(input => {
+      input.addEventListener("input", updateValues);
+    });
+
+    function drawBlock() {
+      const width = canvasA.width;
+      const height = canvasA.height;
+      ctxA.clearRect(0, 0, width, height);
+
+      const groundY = height * 0.7;
+      ctxA.strokeStyle = "#b0b8c2";
+      ctxA.lineWidth = 2;
+      ctxA.beginPath();
+      ctxA.moveTo(30, groundY);
+      ctxA.lineTo(width - 30, groundY);
+      ctxA.stroke();
+
+      ctxA.strokeStyle = "#d0d6dd";
+      for (let i = 40; i < width - 30; i += 30) {
+        ctxA.beginPath();
+        ctxA.moveTo(i, groundY - 6);
+        ctxA.lineTo(i, groundY + 6);
+        ctxA.stroke();
+      }
+
+      const xPixel = 50 + (position / maxDistance) * (width - 140);
+      const blockW = 60;
+      const blockH = 40;
+      ctxA.fillStyle = "#3498db";
+      ctxA.fillRect(xPixel, groundY - blockH, blockW, blockH);
+
+      ctxA.fillStyle = "#2c3e50";
+      ctxA.fillText("m", xPixel + blockW / 2 - 4, groundY - blockH / 2);
+
+      const angle = (parseFloat(theta.value) * Math.PI) / 180;
+      const arrowLen = 60;
+      const startX = xPixel + blockW / 2;
+      const startY = groundY - blockH;
+      const endX = startX + Math.cos(angle) * arrowLen;
+      const endY = startY - Math.sin(angle) * arrowLen;
+
+      ctxA.strokeStyle = "#e67e22";
+      ctxA.lineWidth = 3;
+      ctxA.beginPath();
+      ctxA.moveTo(startX, startY);
+      ctxA.lineTo(endX, endY);
+      ctxA.stroke();
+
+      ctxA.beginPath();
+      ctxA.moveTo(endX, endY);
+      ctxA.lineTo(endX - 8, endY + 6);
+      ctxA.lineTo(endX - 8, endY - 6);
+      ctxA.closePath();
+      ctxA.fillStyle = "#e67e22";
+      ctxA.fill();
+
+      const friction = parseFloat(mu.value) * parseFloat(mass.value) * parseFloat(gravity.value);
+      if (friction > 0.05) {
+        const fEndX = startX - 40;
+        ctxA.strokeStyle = "#8e44ad";
+        ctxA.lineWidth = 3;
+        ctxA.beginPath();
+        ctxA.moveTo(startX, groundY - blockH / 2);
+        ctxA.lineTo(fEndX, groundY - blockH / 2);
+        ctxA.stroke();
+      }
+    }
+
+    function physicsStep(dt) {
+      const m = parseFloat(mass.value);
+      const g = parseFloat(gravity.value);
+      const F = parseFloat(force.value);
+      const ang = (parseFloat(theta.value) * Math.PI) / 180;
+      const normal = m * g;
+      const friction = parseFloat(mu.value) * normal;
+      const Fx = F * Math.cos(ang);
+
+      let netForce = Fx - friction * Math.sign(velocity || Fx);
+
+      if (Math.abs(Fx) <= friction && velocity === 0) {
+        netForce = 0;
+      }
+
+      const accel = netForce / m;
+      velocity += accel * dt;
+      position += velocity * dt;
+      const dWork = netForce * velocity * dt;
+      work += dWork;
+      time += dt;
+
+      if (position < 0) {
+        position = 0;
+        velocity = 0;
+      }
+
+      if (position > maxDistance) {
+        position = maxDistance;
+        velocity = 0;
+      }
+
+      history.t.push(time);
+      history.x.push(position);
+      history.v.push(velocity);
+      history.w.push(work);
+      history.s.push(position);
+
+      if (history.t.length > 120) {
+        ["t", "x", "v", "w", "s"].forEach(key => history[key].shift());
+      }
+    }
+
+    function drawGraph(ctx, dataX, dataY, label) {
+      const w = ctx.canvas.width;
+      const h = ctx.canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = "#f8fbff";
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.strokeStyle = "#d0d6dd";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(6, 6, w - 12, h - 12);
+
+      if (dataX.length < 2) return;
+
+      const minX = Math.min(...dataX);
+      const maxX = Math.max(...dataX);
+      const minY = Math.min(...dataY);
+      const maxY = Math.max(...dataY);
+      const rangeX = maxX - minX || 1;
+      const rangeY = maxY - minY || 1;
+
+      ctx.strokeStyle = "#3498db";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      dataX.forEach((xVal, i) => {
+        const yVal = dataY[i];
+        const x = 10 + ((xVal - minX) / rangeX) * (w - 20);
+        const y = h - 10 - ((yVal - minY) / rangeY) * (h - 20);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      ctx.fillStyle = "#2c3e50";
+      ctx.font = "10px Segoe UI";
+      ctx.fillText(label, 10, 14);
+    }
+
+    function updateMetrics() {
+      speedValue.textContent = `Hiz: ${velocity.toFixed(2)} m/s`;
+      posValue.textContent = `Konum: ${position.toFixed(2)} m`;
+      workValue.textContent = `Is: ${work.toFixed(2)} J`;
+    }
+
+    updateValues();
+
+    let lastTime = performance.now();
+    function loopA(now) {
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
+      lastTime = now;
+      physicsStep(dt);
+      drawBlock();
+      updateMetrics();
+      drawGraph(gxt, history.t, history.x, "Konum-Zaman");
+      drawGraph(gvt, history.t, history.v, "Hiz-Zaman");
+      drawGraph(gwx, history.s, history.w, "Is-Yol");
+      requestAnimationFrame(loopA);
+    }
+    requestAnimationFrame(loopA);
+
+    const canvasB = document.getElementById("canvasB");
+    const ctxB = canvasB.getContext("2d");
+
+    const height = document.getElementById("height");
+    const massB = document.getElementById("massB");
+    const planet = document.getElementById("planet");
+    const loss = document.getElementById("loss");
+    const simSpeed = document.getElementById("simSpeed");
+
+    const hVal = document.getElementById("hVal");
+    const massBVal = document.getElementById("massBVal");
+    const lossVal = document.getElementById("lossVal");
+    const speedVal = document.getElementById("speedVal");
+
+    const ekLabel = document.getElementById("ekLabel");
+    const epLabel = document.getElementById("epLabel");
+    const ehLabel = document.getElementById("ehLabel");
+    const etLabel = document.getElementById("etLabel");
+
+    const ekBar = document.getElementById("ekBar");
+    const epBar = document.getElementById("epBar");
+    const ehBar = document.getElementById("ehBar");
+    const etBar = document.getElementById("etBar");
+
+    let xPos = -1;
+    let direction = 1;
+    let totalEnergy = 0;
+    let heatEnergy = 0;
+
+    function updateValuesB() {
+      hVal.textContent = `${parseFloat(height.value).toFixed(1)} m`;
+      massBVal.textContent = `${massB.value} kg`;
+      lossVal.textContent = parseFloat(loss.value).toFixed(2);
+      speedVal.textContent = `${parseFloat(simSpeed.value).toFixed(1)}x`;
+    }
+
+    [height, massB, planet, loss, simSpeed].forEach(input => {
+      input.addEventListener("input", updateValuesB);
+    });
+
+    function resetEnergy() {
+      const m = parseFloat(massB.value);
+      const g = parseFloat(planet.value);
+      const h = parseFloat(height.value);
+      totalEnergy = m * g * h;
+      heatEnergy = 0;
+      xPos = -1;
+      direction = 1;
+    }
+
+    resetEnergy();
+    updateValuesB();
+
+    function drawTrack() {
+      const w = canvasB.width;
+      const h = canvasB.height;
+      ctxB.clearRect(0, 0, w, h);
+
+      ctxB.strokeStyle = "#2c3e50";
+      ctxB.lineWidth = 3;
+      ctxB.beginPath();
+      for (let i = 0; i <= w; i += 4) {
+        const x = (i / w) * 2 - 1;
+        const y = 0.6 * x * x;
+        const screenX = i;
+        const screenY = h * 0.75 - y * h * 0.5;
+        if (i === 0) ctxB.moveTo(screenX, screenY); else ctxB.lineTo(screenX, screenY);
+      }
+      ctxB.stroke();
+
+      const yPos = 0.6 * xPos * xPos;
+      const ballX = ((xPos + 1) / 2) * w;
+      const ballY = h * 0.75 - yPos * h * 0.5;
+
+      ctxB.fillStyle = "#3498db";
+      ctxB.beginPath();
+      ctxB.arc(ballX, ballY - 12, 14, 0, Math.PI * 2);
+      ctxB.fill();
+    }
+
+    function loopB(now) {
+      const dt = Math.min((now - lastTime) / 1000, 0.05) * parseFloat(simSpeed.value);
+      const m = parseFloat(massB.value);
+      const g = parseFloat(planet.value);
+      const friction = parseFloat(loss.value);
+
+      const yPos = 0.6 * xPos * xPos;
+      const potential = m * g * (yPos * parseFloat(height.value));
+      let kinetic = Math.max(totalEnergy - potential - heatEnergy, 0);
+      const v = Math.sqrt((2 * kinetic) / m) || 0;
+
+      xPos += direction * v * dt * 0.2;
+      if (Math.abs(xPos) >= 1) {
+        xPos = Math.sign(xPos);
+        direction *= -1;
+      }
+
+      heatEnergy += friction * v * dt * m * g * 0.05;
+      heatEnergy = Math.min(heatEnergy, totalEnergy);
+
+      kinetic = Math.max(totalEnergy - potential - heatEnergy, 0);
+      const totalShown = totalEnergy;
+      const kineticP = (kinetic / totalShown) * 100;
+      const potP = (potential / totalShown) * 100;
+      const heatP = (heatEnergy / totalShown) * 100;
+
+      ekBar.style.width = `${Math.max(0, kineticP)}%`;
+      epBar.style.width = `${Math.max(0, potP)}%`;
+      ehBar.style.width = `${Math.max(0, heatP)}%`;
+      etBar.style.width = "100%";
+
+      ekLabel.textContent = `${kinetic.toFixed(1)} J`;
+      epLabel.textContent = `${potential.toFixed(1)} J`;
+      ehLabel.textContent = `${heatEnergy.toFixed(1)} J`;
+      etLabel.textContent = `${totalShown.toFixed(1)} J`;
+
+      drawTrack();
+      requestAnimationFrame(loopB);
+    }
+
+    requestAnimationFrame(loopB);
+
+    [height, massB, planet].forEach(input => {
+      input.addEventListener("change", resetEnergy);
+    });
+  </script>
+</body>
+</html>
