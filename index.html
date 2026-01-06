@@ -265,6 +265,33 @@
       width: 100%;
     }
 
+    .sim-actions {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .sim-actions button {
+      flex: 1;
+      padding: 10px 12px;
+      border: none;
+      border-radius: 10px;
+      background: var(--blue);
+      color: var(--white);
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: var(--shadow);
+    }
+
+    .sim-actions button.secondary {
+      background: var(--navy);
+    }
+
+    .sim-actions button:hover {
+      transform: translateY(-1px);
+    }
+
     .info-tip {
       margin-top: 6px;
       background: #ffeaa7;
@@ -469,7 +496,7 @@
     <div class="sim-layout" id="modA">
       <div class="panel">
         <h3>Mod A: Is ve Kuvvet</h3>
-        <canvas id="canvasA" width="640" height="320"></canvas>
+        <canvas id="canvasA" width="800" height="320"></canvas>
         <div class="metrics">
           <div class="metric" id="speedValue">Hiz: 0.0 m/s</div>
           <div class="metric" id="posValue">Konum: 0.0 m</div>
@@ -483,6 +510,10 @@
       </div>
       <div class="panel" id="controlPanelA">
         <h3>Kontroller</h3>
+        <div class="sim-actions">
+          <button id="toggleA" type="button">Baslat</button>
+          <button id="resetA" class="secondary" type="button">Sifirla</button>
+        </div>
         <div class="control-group">
           <label>Kuvvet (F) <span id="fVal">20 N</span></label>
           <input type="range" id="force" min="0" max="50" value="20" />
@@ -536,6 +567,10 @@
       </div>
       <div class="panel" id="controlPanelB">
         <h3>Kontroller</h3>
+        <div class="sim-actions">
+          <button id="toggleB" type="button">Baslat</button>
+          <button id="resetB" class="secondary" type="button">Sifirla</button>
+        </div>
         <div class="control-group">
           <label>Baslangic Yuksekligi (h) <span id="hVal">3.0 m</span></label>
           <input type="range" id="height" min="1" max="5" step="0.1" value="3" />
@@ -593,29 +628,39 @@
     const modA = document.getElementById("modA");
     const modB = document.getElementById("modB");
 
-    modeAButton.addEventListener("click", () => {
-      modeAButton.classList.add("active");
-      modeBButton.classList.remove("active");
-      modA.style.display = "grid";
-      modB.style.display = "none";
-    });
+    function switchMode(mode) {
+      if (mode === "A") {
+        modeAButton.classList.add("active");
+        modeBButton.classList.remove("active");
+        modA.style.display = "grid";
+        modB.style.display = "none";
+        resetSimA();
+      } else {
+        modeBButton.classList.add("active");
+        modeAButton.classList.remove("active");
+        modB.style.display = "grid";
+        modA.style.display = "none";
+        resetSimB();
+      }
+    }
 
-    modeBButton.addEventListener("click", () => {
-      modeBButton.classList.add("active");
-      modeAButton.classList.remove("active");
-      modB.style.display = "grid";
-      modA.style.display = "none";
-    });
+    modeAButton.addEventListener("click", () => switchMode("A"));
+    modeBButton.addEventListener("click", () => switchMode("B"));
 
     const toggleTips = document.getElementById("toggleTips");
-    const controlPanelA = document.getElementById("controlPanelA");
-    const controlPanelB = document.getElementById("controlPanelB");
+    const toggleA = document.getElementById("toggleA");
+    const resetA = document.getElementById("resetA");
+    const toggleB = document.getElementById("toggleB");
+    const resetB = document.getElementById("resetB");
 
-    toggleTips.addEventListener("change", () => {
-      const hide = !toggleTips.checked;
-      controlPanelA.classList.toggle("tips-hidden", hide);
-      controlPanelB.classList.toggle("tips-hidden", hide);
-    });
+    function applyTips() {
+      const isChecked = toggleTips.checked;
+      document.querySelectorAll(".info-tip").forEach(tip => {
+        tip.style.display = isChecked ? "block" : "none";
+      });
+    }
+
+    toggleTips.addEventListener("change", applyTips);
 
     const force = document.getElementById("force");
     const theta = document.getElementById("theta");
@@ -642,160 +687,210 @@
     const gvt = graphVT.getContext("2d");
     const gwx = graphWX.getContext("2d");
 
-    let position = 0;
-    let velocity = 0;
-    let work = 0;
-    let time = 0;
-    const maxDistance = 10;
-    const history = { t: [], x: [], v: [], w: [], s: [] };
+    const maxX = 50;
+    const groundY = canvasA.height * 0.75;
+    let animIdA;
 
-    function updateValues() {
-      fVal.textContent = `${force.value} N`;
-      thetaVal.textContent = `${theta.value} deg`;
-      massVal.textContent = `${mass.value} kg`;
-      muVal.textContent = parseFloat(mu.value).toFixed(2);
-      gVal.textContent = parseFloat(gravity.value).toFixed(1);
+    const simA = {
+      running: false,
+      time: 0,
+      x: 0,
+      v: 0,
+      F: 20,
+      angle: 0,
+      m: 4,
+      mu: 0.2,
+      g: 9.8,
+      dataLog: []
+    };
+
+    function updateParamsA() {
+      simA.F = parseFloat(force.value);
+      simA.angle = parseFloat(theta.value);
+      simA.m = parseFloat(mass.value);
+      simA.mu = parseFloat(mu.value);
+      simA.g = parseFloat(gravity.value);
+
+      fVal.textContent = `${simA.F} N`;
+      thetaVal.textContent = `${simA.angle} deg`;
+      massVal.textContent = `${simA.m} kg`;
+      muVal.textContent = simA.mu.toFixed(2);
+      gVal.textContent = simA.g.toFixed(1);
+
+      if (!simA.running) {
+        drawSimA();
+      }
     }
 
     [force, theta, mass, mu, gravity].forEach(input => {
-      input.addEventListener("input", updateValues);
+      input.addEventListener("input", updateParamsA);
     });
 
-    function drawBlock() {
-      const width = canvasA.width;
-      const height = canvasA.height;
-      ctxA.clearRect(0, 0, width, height);
+    function toggleSimA() {
+      simA.running = !simA.running;
+      toggleA.textContent = simA.running ? "Duraklat" : "Baslat";
+      if (simA.running) {
+        loopA();
+      }
+    }
 
-      const groundY = height * 0.7;
-      ctxA.strokeStyle = "#b0b8c2";
-      ctxA.lineWidth = 2;
-      ctxA.beginPath();
-      ctxA.moveTo(30, groundY);
-      ctxA.lineTo(width - 30, groundY);
-      ctxA.stroke();
+    function resetSimA() {
+      simA.running = false;
+      simA.time = 0;
+      simA.x = 0;
+      simA.v = 0;
+      simA.dataLog = [];
+      toggleA.textContent = "Baslat";
+      cancelAnimationFrame(animIdA);
+      drawSimA();
+      clearGraphs();
+    }
 
-      ctxA.strokeStyle = "#d0d6dd";
-      for (let i = 40; i < width - 30; i += 30) {
-        ctxA.beginPath();
-        ctxA.moveTo(i, groundY - 6);
-        ctxA.lineTo(i, groundY + 6);
-        ctxA.stroke();
+    function loopA() {
+      if (!simA.running) return;
+
+      const dt = 0.016;
+      simA.time += dt;
+
+      const angleRad = simA.angle * Math.PI / 180;
+      const Fx = simA.F * Math.cos(angleRad);
+      const Fy = simA.F * Math.sin(angleRad);
+      const W = simA.m * simA.g;
+      let normal = W - Fy;
+      if (normal < 0) normal = 0;
+
+      let friction = 0;
+      if (normal > 0) {
+        friction = simA.mu * normal;
+        if (simA.v <= 0.001 && Fx <= friction) {
+          friction = Fx;
+        }
       }
 
-      const xPixel = 50 + (position / maxDistance) * (width - 140);
-      const blockW = 60;
-      const blockH = 40;
+      const netForce = Fx - friction;
+      let accel = netForce / simA.m;
+
+      if (simA.v <= 0 && netForce <= 0) {
+        accel = 0;
+        simA.v = 0;
+      }
+
+      simA.v += accel * dt;
+      simA.x += simA.v * dt;
+
+      if (simA.x > maxX) {
+        simA.x = maxX;
+        simA.v = 0;
+        simA.running = false;
+        toggleA.textContent = "Baslat";
+      }
+
+      if (Math.floor(simA.time * 60) % 5 === 0) {
+        const workForce = Fx * simA.x;
+        const energy = 0.5 * simA.m * simA.v * simA.v;
+        simA.dataLog.push({ t: simA.time, x: simA.x, v: simA.v, w: energy });
+        updateGraphsA();
+      }
+
+      drawSimA();
+      animIdA = requestAnimationFrame(loopA);
+    }
+
+    function drawSimA() {
+      ctxA.clearRect(0, 0, canvasA.width, canvasA.height);
+
+      ctxA.fillStyle = "#b0b8c2";
+      ctxA.fillRect(0, groundY, canvasA.width, 8);
+      ctxA.fillStyle = "#7f8c8d";
+      ctxA.font = "11px Segoe UI";
+      const scaleX = (canvasA.width - 80) / maxX;
+      for (let i = 0; i <= maxX; i += 2) {
+        const tickX = 20 + i * scaleX;
+        ctxA.fillRect(tickX, groundY, 1, 6);
+        if (i % 4 === 0) {
+          ctxA.fillText(`${i}m`, tickX - 6, groundY + 18);
+        }
+      }
+
+      const boxSize = 40;
+      const screenX = 20 + simA.x * scaleX;
+      const screenY = groundY - boxSize;
+
       ctxA.fillStyle = "#3498db";
-      ctxA.fillRect(xPixel, groundY - blockH, blockW, blockH);
+      ctxA.fillRect(screenX, screenY, boxSize, boxSize);
 
       ctxA.fillStyle = "#2c3e50";
-      ctxA.fillText("m", xPixel + blockW / 2 - 4, groundY - blockH / 2);
+      ctxA.fillText("m", screenX + boxSize / 2 - 4, screenY + boxSize / 2 + 4);
 
-      const angle = (parseFloat(theta.value) * Math.PI) / 180;
-      const arrowLen = 60;
-      const startX = xPixel + blockW / 2;
-      const startY = groundY - blockH;
-      const endX = startX + Math.cos(angle) * arrowLen;
-      const endY = startY - Math.sin(angle) * arrowLen;
+      const angleRad = simA.angle * Math.PI / 180;
+      const lineLen = 40 + (simA.F * 1.2);
+      const fxEnd = screenX + boxSize / 2 + Math.cos(angleRad) * lineLen;
+      const fyEnd = screenY + boxSize / 2 - Math.sin(angleRad) * lineLen;
 
-      ctxA.strokeStyle = "#e67e22";
-      ctxA.lineWidth = 3;
-      ctxA.beginPath();
-      ctxA.moveTo(startX, startY);
-      ctxA.lineTo(endX, endY);
-      ctxA.stroke();
-
-      ctxA.beginPath();
-      ctxA.moveTo(endX, endY);
-      ctxA.lineTo(endX - 8, endY + 6);
-      ctxA.lineTo(endX - 8, endY - 6);
-      ctxA.closePath();
+      drawArrow(ctxA, screenX + boxSize / 2, screenY + boxSize / 2, fxEnd, fyEnd, "#e67e22");
       ctxA.fillStyle = "#e67e22";
-      ctxA.fill();
+      ctxA.fillText("F", fxEnd + 4, fyEnd - 4);
 
-      const friction = parseFloat(mu.value) * parseFloat(mass.value) * parseFloat(gravity.value);
-      if (friction > 0.05) {
-        const fEndX = startX - 40;
-        ctxA.strokeStyle = "#8e44ad";
-        ctxA.lineWidth = 3;
-        ctxA.beginPath();
-        ctxA.moveTo(startX, groundY - blockH / 2);
-        ctxA.lineTo(fEndX, groundY - blockH / 2);
-        ctxA.stroke();
+      if (simA.mu > 0 && (simA.v > 0 || simA.F > 0)) {
+        drawArrow(ctxA, screenX + boxSize / 2, groundY, screenX + boxSize / 2 - 35, groundY, "#8e44ad");
+        ctxA.fillStyle = "#8e44ad";
+        ctxA.fillText("fs", screenX + boxSize / 2 - 40, groundY - 6);
       }
+
+      const energy = 0.5 * simA.m * simA.v * simA.v;
+      speedValue.textContent = `Hiz: ${simA.v.toFixed(2)} m/s`;
+      posValue.textContent = `Konum: ${simA.x.toFixed(2)} m`;
+      workValue.textContent = `Is: ${energy.toFixed(2)} J`;
     }
 
-    function physicsStep(dt) {
-      const m = parseFloat(mass.value);
-      const g = parseFloat(gravity.value);
-      const F = parseFloat(force.value);
-      const ang = (parseFloat(theta.value) * Math.PI) / 180;
-      const normal = m * g;
-      const friction = parseFloat(mu.value) * normal;
-      const Fx = F * Math.cos(ang);
+    function drawArrow(ctx, fromx, fromy, tox, toy, color) {
+      const headlen = 10;
+      const dx = tox - fromx;
+      const dy = toy - fromy;
+      const angle = Math.atan2(dy, dx);
+      if (Math.hypot(dx, dy) < 5) return;
 
-      let netForce = Fx - friction * Math.sign(velocity || Fx);
-
-      if (Math.abs(Fx) <= friction && velocity === 0) {
-        netForce = 0;
-      }
-
-      const accel = netForce / m;
-      velocity += accel * dt;
-      position += velocity * dt;
-      const dWork = netForce * velocity * dt;
-      work += dWork;
-      time += dt;
-
-      if (position < 0) {
-        position = 0;
-        velocity = 0;
-      }
-
-      if (position > maxDistance) {
-        position = maxDistance;
-        velocity = 0;
-      }
-
-      history.t.push(time);
-      history.x.push(position);
-      history.v.push(velocity);
-      history.w.push(work);
-      history.s.push(position);
-
-      if (history.t.length > 120) {
-        ["t", "x", "v", "w", "s"].forEach(key => history[key].shift());
-      }
+      ctx.beginPath();
+      ctx.moveTo(fromx, fromy);
+      ctx.lineTo(tox, toy);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(tox, toy);
+      ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
     }
 
-    function drawGraph(ctx, dataX, dataY, label) {
+    function updateGraphsA() {
+      drawMiniGraph(gxt, simA.dataLog, "t", "x", "#3498db", "Konum-Zaman");
+      drawMiniGraph(gvt, simA.dataLog, "t", "v", "#27ae60", "Hiz-Zaman");
+      drawMiniGraph(gwx, simA.dataLog, "x", "w", "#e74c3c", "Is-Yol");
+    }
+
+    function drawMiniGraph(ctx, data, keyX, keyY, color, label) {
       const w = ctx.canvas.width;
       const h = ctx.canvas.height;
       ctx.clearRect(0, 0, w, h);
       ctx.fillStyle = "#f8fbff";
       ctx.fillRect(0, 0, w, h);
-
       ctx.strokeStyle = "#d0d6dd";
-      ctx.lineWidth = 1;
       ctx.strokeRect(6, 6, w - 12, h - 12);
 
-      if (dataX.length < 2) return;
+      if (data.length < 2) return;
 
-      const minX = Math.min(...dataX);
-      const maxX = Math.max(...dataX);
-      const minY = Math.min(...dataY);
-      const maxY = Math.max(...dataY);
-      const rangeX = maxX - minX || 1;
-      const rangeY = maxY - minY || 1;
+      const maxX = Math.max(...data.map(d => d[keyX])) || 1;
+      const maxY = Math.max(...data.map(d => d[keyY])) || 1;
 
-      ctx.strokeStyle = "#3498db";
-      ctx.lineWidth = 2;
       ctx.beginPath();
-      dataX.forEach((xVal, i) => {
-        const yVal = dataY[i];
-        const x = 10 + ((xVal - minX) / rangeX) * (w - 20);
-        const y = h - 10 - ((yVal - minY) / rangeY) * (h - 20);
-        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      ctx.strokeStyle = color;
+      data.forEach((p, i) => {
+        const px = 10 + (p[keyX] / maxX) * (w - 20);
+        const py = h - 10 - (p[keyY] / (maxY * 1.1)) * (h - 20);
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
       });
       ctx.stroke();
 
@@ -804,27 +899,9 @@
       ctx.fillText(label, 10, 14);
     }
 
-    function updateMetrics() {
-      speedValue.textContent = `Hiz: ${velocity.toFixed(2)} m/s`;
-      posValue.textContent = `Konum: ${position.toFixed(2)} m`;
-      workValue.textContent = `Is: ${work.toFixed(2)} J`;
+    function clearGraphs() {
+      [gxt, gvt, gwx].forEach(c => c.clearRect(0, 0, c.canvas.width, c.canvas.height));
     }
-
-    updateValues();
-
-    let lastTime = performance.now();
-    function loopA(now) {
-      const dt = Math.min((now - lastTime) / 1000, 0.05);
-      lastTime = now;
-      physicsStep(dt);
-      drawBlock();
-      updateMetrics();
-      drawGraph(gxt, history.t, history.x, "Konum-Zaman");
-      drawGraph(gvt, history.t, history.v, "Hiz-Zaman");
-      drawGraph(gwx, history.s, history.w, "Is-Yol");
-      requestAnimationFrame(loopA);
-    }
-    requestAnimationFrame(loopA);
 
     const canvasB = document.getElementById("canvasB");
     const ctxB = canvasB.getContext("2d");
@@ -850,107 +927,198 @@
     const ehBar = document.getElementById("ehBar");
     const etBar = document.getElementById("etBar");
 
-    let xPos = -1;
-    let direction = 1;
-    let totalEnergy = 0;
-    let heatEnergy = 0;
+    let animIdB;
+    const simB = {
+      running: false,
+      m: 2,
+      g: 9.8,
+      hStart: 3,
+      muFactor: 0.05,
+      speedMult: 1,
+      xVal: -5,
+      direction: 1,
+      totalE: 0,
+      heatE: 0,
+      v: 0
+    };
 
-    function updateValuesB() {
-      hVal.textContent = `${parseFloat(height.value).toFixed(1)} m`;
-      massBVal.textContent = `${massB.value} kg`;
-      lossVal.textContent = parseFloat(loss.value).toFixed(2);
-      speedVal.textContent = `${parseFloat(simSpeed.value).toFixed(1)}x`;
+    function getTrackY(xMeter) {
+      return 0.2 * xMeter * xMeter;
     }
 
-    [height, massB, planet, loss, simSpeed].forEach(input => {
-      input.addEventListener("input", updateValuesB);
-    });
-
-    function resetEnergy() {
-      const m = parseFloat(massB.value);
-      const g = parseFloat(planet.value);
-      const h = parseFloat(height.value);
-      totalEnergy = m * g * h;
-      heatEnergy = 0;
-      xPos = -1;
-      direction = 1;
+    function getSlope(xMeter) {
+      return 0.4 * xMeter;
     }
 
-    resetEnergy();
-    updateValuesB();
+    function updateParamsB() {
+      simB.hStart = parseFloat(height.value);
+      simB.m = parseFloat(massB.value);
+      simB.g = parseFloat(planet.value);
+      simB.muFactor = parseFloat(loss.value);
+      simB.speedMult = parseFloat(simSpeed.value);
 
-    function drawTrack() {
+      hVal.textContent = `${simB.hStart.toFixed(1)} m`;
+      massBVal.textContent = `${simB.m} kg`;
+      lossVal.textContent = simB.muFactor.toFixed(2);
+      speedVal.textContent = `${simB.speedMult.toFixed(1)}x`;
+
+      if (!simB.running) {
+        resetSimB();
+      }
+    }
+
+    function resetSimB() {
+      simB.running = false;
+      cancelAnimationFrame(animIdB);
+
+      simB.hStart = parseFloat(height.value);
+      simB.m = parseFloat(massB.value);
+      simB.g = parseFloat(planet.value);
+      simB.muFactor = parseFloat(loss.value);
+      simB.speedMult = parseFloat(simSpeed.value);
+
+      hVal.textContent = `${simB.hStart.toFixed(1)} m`;
+      massBVal.textContent = `${simB.m} kg`;
+      lossVal.textContent = simB.muFactor.toFixed(2);
+      speedVal.textContent = `${simB.speedMult.toFixed(1)}x`;
+
+      const startX = Math.sqrt(simB.hStart / 0.2);
+      simB.xVal = -startX;
+      simB.direction = 1;
+      simB.heatE = 0;
+      simB.v = 0;
+      simB.totalE = simB.m * simB.g * simB.hStart;
+
+      drawSimB();
+      toggleB.textContent = "Baslat";
+    }
+
+    function toggleSimB() {
+      simB.running = !simB.running;
+      toggleB.textContent = simB.running ? "Duraklat" : "Baslat";
+      if (simB.running) {
+        if (simB.v < 0.001) {
+          simB.xVal += 0.002 * simB.direction;
+        }
+        loopB();
+      }
+    }
+
+    function loopB() {
+      if (!simB.running) return;
+
+      const dt = 0.02 * simB.speedMult;
+
+      const currentH = getTrackY(simB.xVal);
+      const potential = simB.m * simB.g * currentH;
+
+      if (simB.v > 0.1) {
+        const frictionLoss = simB.muFactor * simB.v * 50 * dt;
+        simB.heatE += frictionLoss;
+      }
+
+      if (simB.heatE > simB.totalE) simB.heatE = simB.totalE;
+
+      let kinetic = simB.totalE - potential - simB.heatE;
+      if (kinetic < 0) kinetic = 0;
+
+      simB.v = Math.sqrt(2 * kinetic / simB.m);
+
+      const slope = getSlope(simB.xVal);
+      const cosAlpha = 1 / Math.sqrt(1 + slope * slope);
+      const vx = simB.v * cosAlpha;
+
+      if (kinetic < 0.05) {
+        simB.direction *= -1;
+        simB.xVal += simB.direction * 0.02;
+      } else {
+        simB.xVal += simB.direction * vx * dt;
+      }
+
+      if (simB.v < 0.1 && Math.abs(simB.xVal) < 0.1) {
+        simB.running = false;
+        toggleB.textContent = "Baslat";
+      }
+
+      const maxMechE = simB.totalE - simB.heatE;
+      const nextH = getTrackY(simB.xVal);
+      const nextPE = simB.m * simB.g * nextH;
+
+      if (nextPE > maxMechE + 0.1) {
+        simB.direction *= -1;
+      }
+
+      if (Math.abs(simB.xVal) > 6.5) {
+        simB.direction *= -1;
+        simB.xVal += simB.direction * 0.5;
+      }
+
+      drawSimB();
+      animIdB = requestAnimationFrame(loopB);
+    }
+
+    function drawSimB() {
       const w = canvasB.width;
       const h = canvasB.height;
+      const scale = 40;
+      const originX = w / 2;
+      const originY = h - 20;
+
       ctxB.clearRect(0, 0, w, h);
 
-      ctxB.strokeStyle = "#2c3e50";
-      ctxB.lineWidth = 3;
       ctxB.beginPath();
-      for (let i = 0; i <= w; i += 4) {
-        const x = (i / w) * 2 - 1;
-        const y = 0.6 * x * x;
-        const screenX = i;
-        const screenY = h * 0.75 - y * h * 0.5;
-        if (i === 0) ctxB.moveTo(screenX, screenY); else ctxB.lineTo(screenX, screenY);
+      ctxB.strokeStyle = "#2c3e50";
+      ctxB.lineWidth = 4;
+      for (let ix = -7; ix <= 7; ix += 0.1) {
+        const iy = getTrackY(ix);
+        const px = originX + ix * scale;
+        const py = originY - iy * scale;
+        if (ix === -7) ctxB.moveTo(px, py); else ctxB.lineTo(px, py);
       }
       ctxB.stroke();
 
-      const yPos = 0.6 * xPos * xPos;
-      const ballX = ((xPos + 1) / 2) * w;
-      const ballY = h * 0.75 - yPos * h * 0.5;
+      const ballY = getTrackY(simB.xVal);
+      const ballPx = originX + simB.xVal * scale;
+      const ballPy = originY - ballY * scale - 10;
 
-      ctxB.fillStyle = "#3498db";
       ctxB.beginPath();
-      ctxB.arc(ballX, ballY - 12, 14, 0, Math.PI * 2);
+      ctxB.arc(ballPx, ballPy, 10, 0, Math.PI * 2);
+      ctxB.fillStyle = "#e74c3c";
       ctxB.fill();
-    }
+      ctxB.strokeStyle = "#9b1c12";
+      ctxB.stroke();
 
-    function loopB(now) {
-      const dt = Math.min((now - lastTime) / 1000, 0.05) * parseFloat(simSpeed.value);
-      const m = parseFloat(massB.value);
-      const g = parseFloat(planet.value);
-      const friction = parseFloat(loss.value);
+      const potential = simB.m * simB.g * ballY;
+      const kinetic = Math.max(simB.totalE - potential - simB.heatE, 0);
+      const maxE = simB.totalE > 0 ? simB.totalE : 1;
 
-      const yPos = 0.6 * xPos * xPos;
-      const potential = m * g * (yPos * parseFloat(height.value));
-      let kinetic = Math.max(totalEnergy - potential - heatEnergy, 0);
-      const v = Math.sqrt((2 * kinetic) / m) || 0;
-
-      xPos += direction * v * dt * 0.2;
-      if (Math.abs(xPos) >= 1) {
-        xPos = Math.sign(xPos);
-        direction *= -1;
-      }
-
-      heatEnergy += friction * v * dt * m * g * 0.05;
-      heatEnergy = Math.min(heatEnergy, totalEnergy);
-
-      kinetic = Math.max(totalEnergy - potential - heatEnergy, 0);
-      const totalShown = totalEnergy;
-      const kineticP = (kinetic / totalShown) * 100;
-      const potP = (potential / totalShown) * 100;
-      const heatP = (heatEnergy / totalShown) * 100;
-
-      ekBar.style.width = `${Math.max(0, kineticP)}%`;
-      epBar.style.width = `${Math.max(0, potP)}%`;
-      ehBar.style.width = `${Math.max(0, heatP)}%`;
+      ekBar.style.width = `${(kinetic / maxE * 100).toFixed(2)}%`;
+      epBar.style.width = `${(potential / maxE * 100).toFixed(2)}%`;
+      ehBar.style.width = `${(simB.heatE / maxE * 100).toFixed(2)}%`;
       etBar.style.width = "100%";
 
-      ekLabel.textContent = `${kinetic.toFixed(1)} J`;
-      epLabel.textContent = `${potential.toFixed(1)} J`;
-      ehLabel.textContent = `${heatEnergy.toFixed(1)} J`;
-      etLabel.textContent = `${totalShown.toFixed(1)} J`;
-
-      drawTrack();
-      requestAnimationFrame(loopB);
+      ekLabel.textContent = `${kinetic.toFixed(0)} J`;
+      epLabel.textContent = `${potential.toFixed(0)} J`;
+      ehLabel.textContent = `${simB.heatE.toFixed(0)} J`;
+      etLabel.textContent = `${(kinetic + potential + simB.heatE).toFixed(0)} J`;
     }
 
-    requestAnimationFrame(loopB);
+    toggleA.addEventListener("click", toggleSimA);
+    resetA.addEventListener("click", resetSimA);
+    toggleB.addEventListener("click", toggleSimB);
+    resetB.addEventListener("click", resetSimB);
 
-    [height, massB, planet].forEach(input => {
-      input.addEventListener("change", resetEnergy);
+    [height, massB, planet, loss].forEach(input => {
+      input.addEventListener("input", updateParamsB);
+      input.addEventListener("change", resetSimB);
     });
+
+    simSpeed.addEventListener("input", updateParamsB);
+
+    updateParamsA();
+    updateParamsB();
+    applyTips();
+    switchMode("A");
   </script>
 </body>
 </html>
